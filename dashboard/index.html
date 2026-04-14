@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>quorum — dashboard</title>
+<title>splitbrain — dashboard</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;600;700&display=swap');
   :root {
@@ -91,7 +91,7 @@
       <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
     </svg>
   </div>
-  <div><h1><span>quorum</span></h1><div class="sub">raft-lite · 3 nodes · in-memory</div></div>
+  <div><h1><span>splitbrain</span></h1><div class="sub">raft-lite · 3 nodes · in-memory</div></div>
   <div class="pulse" style="margin-left:auto"></div>
 </header>
 
@@ -171,7 +171,8 @@ const B='http://localhost';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-async function fetchS(port){try{const r=await fetch(`${B}:${port}/status`,{signal:AbortSignal.timeout(700)});return r.ok?r.json():null}catch{return null}}
+function fetchTimeout(url,ms,opts={}){const c=new AbortController();const id=setTimeout(()=>c.abort(),ms);return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(id))}
+async function fetchS(port){try{const r=await fetchTimeout(`${B}:${port}/status`,3000);return r.ok?r.json():null}catch{return null}}
 
 async function poll(){for(const n of NODES){states[n.port]=await fetchS(n.port)}renderCards();renderTopo()}
 setInterval(poll,1000);poll();
@@ -223,7 +224,7 @@ async function doWrite(){
   if(!ports.length){toast('error','Error','No nodes online');return}
   let port=ports[Math.floor(Math.random()*ports.length)];
   try{
-    let r=await fetch(`${B}:${port}/write`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,value:val,operation:curOp}),signal:AbortSignal.timeout(2000)});
+    let r=await fetch(`${B}:${port}/write`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,value:val,operation:curOp}),signal:(()=>{const c=new AbortController();setTimeout(()=>c.abort(),2000);return c.signal})()});
     let d=await r.json();
     if(d.success){addLog('success',`${curOp} ${key}=${val} -> OK (:${port})`);toast('success','Replicated!',`${key} -> ${val||'(deleted)'}`)}
     else if(d.error==='not_leader'){
@@ -247,7 +248,7 @@ async function run(name){
   const write=async(k,v,pfx)=>{
     const p=leader()||NODES.find(n=>states[n.port])?.port;
     if(!p){addLog('error','No nodes online');return false}
-    try{const r=await fetch(`${B}:${p}/write`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v,operation:'SET'}),signal:AbortSignal.timeout(2000)});
+    try{const r=await fetch(`${B}:${p}/write`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v,operation:'SET'}),signal:(()=>{const c=new AbortController();setTimeout(()=>c.abort(),2000);return c.signal})()});
       const d=await r.json();addLog(d.success?'success':'error',`${pfx||''} SET ${k}=${v} -> ${d.success?'OK':'FAILED'}`);return d.success}
     catch{addLog('error',`Timeout writing ${k}`);return false}
   };
