@@ -23,6 +23,3 @@ echo "beta   -> http://localhost:8002"
 echo "gamma  -> http://localhost:8003"
 echo "Dashboard: open dashboard/index.html"
 echo "To stop: ./stop.sh"
-
-trap "$DIR/stop.sh; exit 0" SIGINT SIGTERM
-wait
