@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>quorum — dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;600;700&display=swap');
+  :root {
+    --bg:#0a0c10;--surface:#10141c;--border:#1e2635;
+    --accent:#00e5ff;--green:#00ff88;--yellow:#ffd740;--red:#ff4f6a;--purple:#b48eff;
+    --text:#cdd6f4;--muted:#585b70;
+    --font-mono:'JetBrains Mono',monospace;--font-sans:'Space Grotesk',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  header{position:relative;z-index:1;padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;background:rgba(10,12,16,.85);backdrop-filter:blur(8px)}
+  .logo-icon{width:34px;height:34px;border:2px solid var(--accent);border-radius:8px;display:grid;place-items:center;box-shadow:0 0 18px rgba(0,229,255,.3)}
+  h1{font-size:17px;font-weight:700;letter-spacing:.05em}h1 span{color:var(--accent)}
+  .sub{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:2px}
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s ease-in-out infinite;margin-left:auto}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+  main{position:relative;z-index:1;padding:22px 28px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;max-width:1380px;margin:0 auto}
+  .node-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--muted);transition:background .3s}
+  .card.leader::before{background:var(--accent)}.card.follower::before{background:var(--purple)}.card.offline::before{background:var(--red)}
+  .card.leader{border-color:rgba(0,229,255,.3);box-shadow:0 0 20px rgba(0,229,255,.25)}.card.offline{opacity:.5}
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .nid{font-family:var(--font-mono);font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .card.leader .nid{color:var(--accent)}.card.follower .nid{color:var(--purple)}.card.offline .nid{color:var(--red)}
+  .badge{font-family:var(--font-mono);font-size:10px;padding:3px 10px;border-radius:20px;letter-spacing:.1em}
+  .badge.LEADER{background:rgba(0,229,255,.12);color:var(--accent);border:1px solid rgba(0,229,255,.3)}
+  .badge.FOLLOWER{background:rgba(180,142,255,.12);color:var(--purple);border:1px solid rgba(180,142,255,.3)}
+  .badge.CANDIDATE{background:rgba(255,215,64,.12);color:var(--yellow);border:1px solid rgba(255,215,64,.3)}
+  .badge.OFFLINE{background:rgba(255,79,106,.12);color:var(--red);border:1px solid rgba(255,79,106,.3)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:7px;padding:9px 11px}
+  .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+  .sv{font-family:var(--font-mono);font-size:15px;font-weight:500}
+  .store-box{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;min-height:54px;max-height:110px;overflow-y:auto}
+  .store-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+  .se{font-family:var(--font-mono);font-size:12px;display:flex;gap:7px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .sk{color:var(--accent)}.sv2{color:var(--green)}
+  .empty{font-family:var(--font-mono);font-size:11px;color:var(--muted);font-style:italic}
+  .actions{display:flex;gap:7px;margin-top:12px}
+  .btn{font-family:var(--font-mono);font-size:11px;padding:5px 13px;border-radius:6px;border:1px solid;cursor:pointer;transition:all .15s;letter-spacing:.05em}
+  .btn-k{background:rgba(255,79,106,.08);border-color:rgba(255,79,106,.4);color:var(--red)}.btn-k:hover{background:rgba(255,79,106,.2)}
+  .btn-s{background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.4);color:var(--green)}.btn-s:hover{background:rgba(0,255,136,.2)}
+  .btn-l{background:rgba(255,255,255,.04);border-color:var(--border);color:var(--muted);margin-left:auto}.btn-l:hover{color:var(--text)}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+  .ptitle{font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:7px}
+  .write-panel{grid-column:1/2}.log-panel{grid-column:2/4;display:flex;flex-direction:column}
+  .fg{margin-bottom:12px}
+  label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+  input,select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:7px 11px;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;transition:border-color .15s}
+  input:focus,select:focus{border-color:var(--accent)}
+  select option{background:var(--surface)}
+  .op-row{display:flex;gap:7px}
+  .op{flex:1;padding:6px;text-align:center;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--font-mono);font-size:11px;cursor:pointer;transition:all .15s}
+  .op.a[data-op="SET"]{background:rgba(0,255,136,.1);border-color:rgba(0,255,136,.4);color:var(--green)}
+  .op.a[data-op="DELETE"]{background:rgba(255,79,106,.1);border-color:rgba(255,79,106,.4);color:var(--red)}
+  .submit{width:100%;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.4);border-radius:6px;color:var(--accent);font-family:var(--font-mono);font-size:12px;font-weight:600;padding:9px;cursor:pointer;letter-spacing:.07em;transition:all .15s}
+  .submit:hover{background:rgba(0,229,255,.2)}
+  .elog{flex:1;font-family:var(--font-mono);font-size:12px;overflow-y:auto;max-height:260px;display:flex;flex-direction:column;gap:3px}
+  .le{display:flex;gap:9px;align-items:flex-start;padding:4px 7px;border-radius:5px;border-left:3px solid transparent;animation:fi .25s ease}
+  @keyframes fi{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:translateX(0)}}
+  .le.info{border-color:var(--accent);background:rgba(0,229,255,.04)}
+  .le.success{border-color:var(--green);background:rgba(0,255,136,.04)}
+  .le.error{border-color:var(--red);background:rgba(255,79,106,.04)}
+  .le.warn{border-color:var(--yellow);background:rgba(255,215,64,.04)}
+  .lts{color:var(--muted);white-space:nowrap;font-size:10px;padding-top:1px}.lm{flex:1}
+  .scen-panel{grid-column:1/-1}.scenarios{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+  .sc{border:1px solid var(--border);border-radius:8px;padding:13px;cursor:pointer;transition:all .15s;background:rgba(0,0,0,.2)}
+  .sc:hover{border-color:var(--accent);background:rgba(0,229,255,.04)}
+  .sci{font-size:20px;margin-bottom:6px}.scn{font-size:13px;font-weight:600;margin-bottom:3px}
+  .scd{font-size:11px;color:var(--muted);line-height:1.5}
+  .topo-panel{grid-column:1/-1}
+  #topo{width:100%;height:190px}
+  .toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 17px;font-family:var(--font-mono);font-size:12px;z-index:100;transform:translateY(70px);opacity:0;transition:all .3s;max-width:300px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.success{border-color:rgba(0,255,136,.4)}.toast.error{border-color:rgba(255,79,106,.4)}.toast.warn{border-color:rgba(255,215,64,.4)}
+  .tt{font-weight:700;margin-bottom:3px}.toast.success .tt{color:var(--green)}.toast.error .tt{color:var(--red)}.toast.warn .tt{color:var(--yellow)}
+  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+    </svg>
+  </div>
+  <div><h1><span>quorum</span></h1><div class="sub">raft-lite · 3 nodes · in-memory</div></div>
+  <div class="pulse" style="margin-left:auto"></div>
+</header>
+
+<main>
+  <div class="node-grid" id="ng"></div>
+
+  <div class="panel write-panel">
+    <div class="ptitle">Operation</div>
+    <div class="fg"><label>Target Node</label>
+      <select id="tn">
+        <option value="auto">Auto (any)</option>
+        <option value="8001">alpha :8001</option>
+        <option value="8002">beta  :8002</option>
+        <option value="8003">gamma :8003</option>
+      </select>
+    </div>
+    <div class="fg"><label>Type</label>
+      <div class="op-row">
+        <div class="op a" data-op="SET" onclick="selOp('SET')">SET</div>
+        <div class="op" data-op="DELETE" onclick="selOp('DELETE')">DELETE</div>
+      </div>
+    </div>
+    <div class="fg"><label>Key</label><input id="wk" placeholder="user:42"/></div>
+    <div class="fg" id="vg"><label>Value</label><input id="wv" placeholder="Alice"/></div>
+    <button class="submit" onclick="doWrite()">EXECUTE</button>
+  </div>
+
+  <div class="panel log-panel">
+    <div class="ptitle">Event Log <button class="btn btn-l" style="font-size:10px" onclick="document.getElementById('el').innerHTML=''">clear</button></div>
+    <div class="elog" id="el"><div class="le info"><span class="lts">--:--:--</span><span class="lm">Waiting for nodes...</span></div></div>
+  </div>
+
+  <div class="panel scen-panel">
+    <div class="ptitle">Scenarios</div>
+    <div class="scenarios">
+      <div class="sc" onclick="run('flood')"><div class="sci">&#9889;</div><div class="scn">Write Flood</div><div class="scd">20 fast writes, observe replication.</div></div>
+      <div class="sc" onclick="run('kill-leader')"><div class="sci">&#128128;</div><div class="scn">Kill Leader</div><div class="scd">Kill the leader, watch new election.</div></div>
+      <div class="sc" onclick="run('partition')"><div class="sci">&#128268;</div><div class="scn">Partition</div><div class="scd">Follower drops, data written, rejoins and syncs.</div></div>
+      <div class="sc" onclick="run('split-brain')"><div class="sci">&#129504;</div><div class="scn">Split Brain</div><div class="scd">2 nodes off &rarr; no quorum &rarr; write rejected.</div></div>
+    </div>
+  </div>
+
+  <div class="panel topo-panel">
+    <div class="ptitle">Topology</div>
+    <svg id="topo" viewBox="0 0 800 180">
+      <line id="lab" x1="210" y1="90" x2="400" y2="90" stroke="#1e2635" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line id="lbc" x1="400" y1="90" x2="590" y2="90" stroke="#1e2635" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line id="lac" x1="210" y1="80" x2="590" y2="80" stroke="#1e2635" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <g id="tn1" transform="translate(120,90)">
+        <circle r="48" fill="#10141c" stroke="#1e2635" stroke-width="1.5"/>
+        <text y="-13" text-anchor="middle" fill="#00e5ff" font-family="JetBrains Mono" font-size="12" font-weight="700">ALPHA</text>
+        <text id="ts1" y="5" text-anchor="middle" fill="#585b70" font-family="JetBrains Mono" font-size="10">...</text>
+        <text id="tt1" y="20" text-anchor="middle" fill="#585b70" font-family="JetBrains Mono" font-size="9">term 0</text>
+      </g>
+      <g id="tn2" transform="translate(400,90)">
+        <circle r="48" fill="#10141c" stroke="#1e2635" stroke-width="1.5"/>
+        <text y="-13" text-anchor="middle" fill="#b48eff" font-family="JetBrains Mono" font-size="12" font-weight="700">BETA</text>
+        <text id="ts2" y="5" text-anchor="middle" fill="#585b70" font-family="JetBrains Mono" font-size="10">...</text>
+        <text id="tt2" y="20" text-anchor="middle" fill="#585b70" font-family="JetBrains Mono" font-size="9">term 0</text>
+      </g>
+      <g id="tn3" transform="translate(680,90)">
+        <circle r="48" fill="#10141c" stroke="#1e2635" stroke-width="1.5"/>
+        <text y="-13" text-anchor="middle" fill="#b48eff" font-family="JetBrains Mono" font-size="12" font-weight="700">GAMMA</text>
+        <text id="ts3" y="5" text-anchor="middle" fill="#585b70" font-family="JetBrains Mono" font-size="10">...</text>
+        <text id="tt3" y="20" text-anchor="middle" fill="#585b70" font-family="JetBrains Mono" font-size="9">term 0</text>
+      </g>
+    </svg>
+  </div>
+</main>
+
+<div class="toast" id="toast"><div class="tt" id="tt"></div><div id="tb"></div></div>
+
+<script>
+const NODES=[{id:'alpha',port:8001},{id:'beta',port:8002},{id:'gamma',port:8003}];
+let states={},curOp='SET',busy=false;
+const B='http://localhost';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+async function fetchS(port){try{const r=await fetch(`${B}:${port}/status`,{signal:AbortSignal.timeout(700)});return r.ok?r.json():null}catch{return null}}
+
+async function poll(){for(const n of NODES){states[n.port]=await fetchS(n.port)}renderCards();renderTopo()}
+setInterval(poll,1000);poll();
+
+function renderCards(){
+  const g=$('ng');g.innerHTML='';
+  NODES.forEach(n=>{
+    const s=states[n.port],on=!!s,state=on?s.state:'OFFLINE',cls=on?s.state.toLowerCase():'offline';
+    const entries=on&&s.store?Object.entries(s.store):[];
+    const storeH=entries.length?entries.map(([k,v])=>`<div class="se"><span class="sk">${esc(k)}</span><span style="color:var(--muted)">-></span><span class="sv2">${esc(v)}</span></div>`).join(''):'<span class="empty">empty</span>';
+    const c=document.createElement('div');c.className=`card ${cls}`;
+    c.innerHTML=`<div class="card-head"><div class="nid">${n.id}</div><div class="badge ${state}">${state}</div></div>
+    <div class="stats">
+      <div class="stat"><div class="sl">Term</div><div class="sv" style="color:var(--yellow)">${on?s.term:'&mdash;'}</div></div>
+      <div class="stat"><div class="sl">Log</div><div class="sv" style="color:var(--purple)">${on?s.log_size:'&mdash;'}</div></div>
+      <div class="stat"><div class="sl">Commit</div><div class="sv">${on?s.commit_index:'&mdash;'}</div></div>
+      <div class="stat"><div class="sl">Uptime</div><div class="sv" style="font-size:10px;color:var(--muted)">${on?s.uptime:'&mdash;'}</div></div>
+    </div>
+    <div class="store-box"><div class="store-lbl">Store (${entries.length} keys)</div>${storeH}</div>
+    <div class="actions">
+      ${on?`<button class="btn btn-k" onclick="killTip(${NODES.indexOf(n)+1},'${n.id}')">KILL</button>`:`<button class="btn btn-s" onclick="startTip(${NODES.indexOf(n)+1},'${n.id}')">START</button>`}
+      <button class="btn btn-l" onclick="logTip(${NODES.indexOf(n)+1})" ${!on?'disabled':''}>logs</button>
+    </div>`;
+    g.appendChild(c);
+  });
+}
+
+function renderTopo(){
+  const cols={LEADER:'#00e5ff',FOLLOWER:'#b48eff',CANDIDATE:'#ffd740',OFFLINE:'#ff4f6a'};
+  NODES.forEach((n,i)=>{
+    const s=states[n.port],on=!!s,state=on?s.state:'OFFLINE',col=cols[state]||'#585b70';
+    const g=document.getElementById(`tn${i+1}`),c=g.querySelector('circle');
+    c.setAttribute('stroke',col);c.setAttribute('stroke-width',state==='LEADER'?'3':'1.5');
+    c.setAttribute('fill',on?'#10141c':'#0d0f14');
+    document.getElementById(`ts${i+1}`).setAttribute('fill',col);
+    document.getElementById(`ts${i+1}`).textContent=state;
+    document.getElementById(`tt${i+1}`).textContent=on?`term ${s.term}`:'offline';
+  });
+}
+
+function selOp(op){curOp=op;document.querySelectorAll('.op').forEach(b=>b.classList.remove('a'));document.querySelector(`[data-op="${op}"]`).classList.add('a');$('vg').style.display=op==='SET'?'':'none'}
+
+function leader(){for(const[p,s]of Object.entries(states))if(s&&s.state==='LEADER')return parseInt(p);return null}
+
+async function doWrite(){
+  const key=$('wk').value.trim(),val=$('wv').value.trim(),tp=$('tn').value;
+  if(!key){toast('error','Error','Key is required');return}
+  const ports=tp==='auto'?NODES.filter(n=>states[n.port]).map(n=>n.port):[parseInt(tp)];
+  if(!ports.length){toast('error','Error','No nodes online');return}
+  let port=ports[Math.floor(Math.random()*ports.length)];
+  try{
+    let r=await fetch(`${B}:${port}/write`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,value:val,operation:curOp}),signal:AbortSignal.timeout(2000)});
+    let d=await r.json();
+    if(d.success){addLog('success',`${curOp} ${key}=${val} -> OK (:${port})`);toast('success','Replicated!',`${key} -> ${val||'(deleted)'}`)}
+    else if(d.error==='not_leader'){
+      addLog('warn',`Node :${port} is not leader, trying leader...`);
+      const lp=leader();
+      if(lp){r=await fetch(`${B}:${lp}/write`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,value:val,operation:curOp})});d=await r.json();
+        if(d.success){addLog('success',`${curOp} ${key} -> OK (leader :${lp})`);toast('success','Replicated!',`via leader :${lp}`)}
+        else{addLog('error','No quorum');toast('error','No quorum','Insufficient nodes online')}}
+    }else{addLog('error',`Error: ${JSON.stringify(d)}`);toast('error','Failed',d.error||'?')}
+  }catch{addLog('error',`Timeout :${port}`);toast('error','Timeout',`Node :${port} not responding`)}
+}
+
+function killTip(n,name){addLog('warn',`Run in terminal: ./node-control.sh kill ${n}`);toast('warn',`Kill ${name}`,`./node-control.sh kill ${n}`)}
+function startTip(n,name){addLog('info',`Run in terminal: ./node-control.sh start ${n}`);toast('warn',`Start ${name}`,`./node-control.sh start ${n}`)}
+function logTip(n){addLog('info',`./node-control.sh logs ${n}`)}
+
+async function run(name){
+  if(busy){addLog('warn','Scenario already running');return}
+  busy=true;
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const write=async(k,v,pfx)=>{
+    const p=leader()||NODES.find(n=>states[n.port])?.port;
+    if(!p){addLog('error','No nodes online');return false}
+    try{const r=await fetch(`${B}:${p}/write`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k,value:v,operation:'SET'}),signal:AbortSignal.timeout(2000)});
+      const d=await r.json();addLog(d.success?'success':'error',`${pfx||''} SET ${k}=${v} -> ${d.success?'OK':'FAILED'}`);return d.success}
+    catch{addLog('error',`Timeout writing ${k}`);return false}
+  };
+  addLog('info',`---- Scenario: ${name} ----`);
+  if(name==='flood'){
+    addLog('info','20 writes...');
+    for(let i=0;i<20;i++){await write(`flood:${i}`,`v${Math.random().toFixed(3)}`,`[${i+1}/20]`);await sleep(120)}
+    addLog('success','Flood complete!');
+  }else if(name==='kill-leader'){
+    const lp=leader();
+    if(!lp){addLog('error','No leader identified');busy=false;return}
+    const ln=NODES.find(n=>n.port===lp);
+    addLog('warn',`Leader: ${ln.id} (:${lp})`);
+    addLog('info',`Run: ./node-control.sh kill ${NODES.indexOf(ln)+1}`);
+    addLog('info','Wait ~2s and watch the new election!');
+  }else if(name==='partition'){
+    const f=NODES.find(n=>states[n.port]&&states[n.port].state==='FOLLOWER');
+    if(!f){addLog('error','No follower available');busy=false;return}
+    const fi=NODES.indexOf(f)+1;
+    addLog('warn',`Follower: ${f.id} (:${f.port})`);
+    addLog('info',`1. ./node-control.sh kill ${fi}`);
+    addLog('info','2. Write data here in the dashboard...');
+    addLog('info',`3. ./node-control.sh start ${fi}`);
+    addLog('info','4. Watch automatic log sync!');
+  }else if(name==='split-brain'){
+    addLog('warn','Kill 2 nodes:');
+    addLog('info','./node-control.sh kill 2 && ./node-control.sh kill 3');
+    addLog('info','With 1 node online (< quorum), writes will be rejected.');
+    addLog('info','Demonstrates CP of CAP theorem: consistency > availability!');
+    await sleep(500);
+    addLog('info','Attempting write without quorum...');
+    await write('test:split','brain','SPLIT');
+  }
+  busy=false;
+}
+
+function addLog(type,msg){
+  const el=$('el'),ts=new Date().toTimeString().split(' ')[0];
+  const d=document.createElement('div');d.className=`le ${type}`;
+  d.innerHTML=`<span class="lts">${ts}</span><span class="lm">${esc(msg)}</span>`;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+
+let tt;
+function toast(type,title,body){
+  const t=$('toast');t.className=`toast ${type} show`;
+  $('tt').textContent=title;$('tb').textContent=body;
+  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+selOp('SET');
+</script>
+</body>
+</html>
