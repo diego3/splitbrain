@@ -9,14 +9,16 @@ class DashHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path in ("/", ""):
             self.send_response(302)
-            self.send_header("Location", "/dash")
+            self.send_header("Location", "/dashboard")
             self.end_headers()
         else:
             super().do_GET()
 
     def translate_path(self, path):
-        if path.startswith("/dash"):
-            path = path[5:] or "/"
+        for prefix in ("/dashboard", "/dash"):
+            if path.startswith(prefix):
+                path = path[len(prefix):] or "/"
+                break
         return super().translate_path(path)
 
     def log_message(self, fmt, *args):

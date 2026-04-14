@@ -23,5 +23,5 @@ python3 "$DIR/server.py" >> "$DIR/logs/dashboard.log" 2>&1 & echo $! > "$DIR/log
 echo "alpha     -> http://localhost:8001"
 echo "beta      -> http://localhost:8002"
 echo "gamma     -> http://localhost:8003"
-echo "dashboard -> http://localhost:8080/dash"
+echo "dashboard -> http://localhost:8080/dashboard"
 echo "To stop: ./stop.sh"

@@ -36,7 +36,7 @@ case "$cmd" in
     done
     f="$LOG/dashboard.pid"
     if [ -f "$f" ] && kill -0 "$(cat $f)" 2>/dev/null; then
-      echo "  UP   dashboard  :8080  | http://localhost:8080/dash"
+      echo "  UP   dashboard  :8080  | http://localhost:8080/dashboard"
     else
       echo "  DOWN dashboard  :8080  | OFFLINE"
     fi

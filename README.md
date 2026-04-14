@@ -45,19 +45,19 @@ quorum/
 Then open the dashboard in your browser:
 
 ```
-http://localhost:8080/dash
+http://localhost:8080/dashboard
 ```
 
-> Accessing `http://localhost:8080` redirects automatically to `/dash`.
+> Accessing `http://localhost:8080` or `/dash` redirects automatically to `/dashboard`.
 
 The services start on:
 
-| Service   | Address                       |
-|-----------|-------------------------------|
-| alpha     | http://localhost:8001         |
-| beta      | http://localhost:8002         |
-| gamma     | http://localhost:8003         |
-| dashboard | http://localhost:8080/dash    |
+| Service   | Address                            |
+|-----------|------------------------------------|
+| alpha     | http://localhost:8001              |
+| beta      | http://localhost:8002              |
+| gamma     | http://localhost:8003              |
+| dashboard | http://localhost:8080/dashboard    |
 
 To stop the cluster:
 
