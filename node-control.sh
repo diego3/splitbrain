@@ -34,6 +34,12 @@ case "$cmd" in
         echo "  DOWN ${NAMES[$i]} :${PORTS[$i]} | OFFLINE"
       fi
     done
+    f="$LOG/dashboard.pid"
+    if [ -f "$f" ] && kill -0 "$(cat $f)" 2>/dev/null; then
+      echo "  UP   dashboard  :8080  | http://localhost:8080/dash"
+    else
+      echo "  DOWN dashboard  :8080  | OFFLINE"
+    fi
     ;;
   logs) tail -f "$LOG/node${n}.log" ;;
   *) echo "usage: $0 {kill|start|status|logs} [1|2|3]" ;;

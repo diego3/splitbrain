@@ -18,10 +18,10 @@ PORT=8001 NODE_ID="alpha" PEERS="$PEERS_1" "$DIR/bin/dbnode" >> "$DIR/logs/node1
 PORT=8002 NODE_ID="beta"  PEERS="$PEERS_2" "$DIR/bin/dbnode" >> "$DIR/logs/node2.log" 2>&1 & echo $! > "$DIR/logs/node2.pid"
 PORT=8003 NODE_ID="gamma" PEERS="$PEERS_3" "$DIR/bin/dbnode" >> "$DIR/logs/node3.log" 2>&1 & echo $! > "$DIR/logs/node3.pid"
 
-python3 -m http.server 8080 --directory "$DIR/dashboard" >> "$DIR/logs/dashboard.log" 2>&1 & echo $! > "$DIR/logs/dashboard.pid"
+python3 "$DIR/server.py" >> "$DIR/logs/dashboard.log" 2>&1 & echo $! > "$DIR/logs/dashboard.pid"
 
 echo "alpha     -> http://localhost:8001"
 echo "beta      -> http://localhost:8002"
 echo "gamma     -> http://localhost:8003"
-echo "dashboard -> http://localhost:8080"
+echo "dashboard -> http://localhost:8080/dash"
 echo "To stop: ./stop.sh"

@@ -32,26 +32,32 @@ quorum/
 ## Requirements
 
 - Go 1.21+
-- A modern browser (for the dashboard)
+- Python 3 (for the dashboard server)
+- A modern browser
 
 ## Getting Started
 
 ```bash
-# 1. Build and start the cluster
+# Build and start the cluster + dashboard server
 ./start.sh
-
-# 2. Open the dashboard
-open dashboard/index.html   # macOS
-xdg-open dashboard/index.html  # Linux
 ```
 
-The three nodes start on:
+Then open the dashboard in your browser:
 
-| Node  | Port  |
-|-------|-------|
-| alpha | 8001  |
-| beta  | 8002  |
-| gamma | 8003  |
+```
+http://localhost:8080/dash
+```
+
+> Accessing `http://localhost:8080` redirects automatically to `/dash`.
+
+The services start on:
+
+| Service   | Address                       |
+|-----------|-------------------------------|
+| alpha     | http://localhost:8001         |
+| beta      | http://localhost:8002         |
+| gamma     | http://localhost:8003         |
+| dashboard | http://localhost:8080/dash    |
 
 To stop the cluster:
 
