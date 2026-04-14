@@ -1,10 +1,10 @@
-# quorum
+# splitbrain
 
 A minimal Raft consensus implementation in Go — a 3-node distributed key-value store with leader election, log replication, and a real-time web dashboard.
 
 ## Overview
 
-**quorum** demonstrates the core ideas of the [Raft consensus algorithm](https://raft.github.io/):
+**splitbrain** demonstrates the core ideas of the [Raft consensus algorithm](https://raft.github.io()):
 
 - **Leader election** — nodes hold randomized election timeouts; if no heartbeat arrives, a candidate requests votes and wins with a majority
 - **Log replication** — the leader appends entries to its log and replicates them to followers before committing
