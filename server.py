@@ -11,15 +11,12 @@ class DashHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(302)
             self.send_header("Location", "/dashboard")
             self.end_headers()
-        else:
-            super().do_GET()
-
-    def translate_path(self, path):
+            return
         for prefix in ("/dashboard", "/dash"):
-            if path.startswith(prefix):
-                path = path[len(prefix):] or "/"
+            if self.path == prefix or self.path.startswith(prefix + "/"):
+                self.path = self.path[len(prefix):] or "/"
                 break
-        return super().translate_path(path)
+        super().do_GET()
 
     def log_message(self, fmt, *args):
         pass  # silence request logs
